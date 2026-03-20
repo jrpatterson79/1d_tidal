@@ -198,133 +198,97 @@ def build_models():
         pname="GHB-TIDAL",
     )
 
-    wel_spd = {}
-    wel_spd[1] = [
-        [0, 11, 2, -50, ""],
-        [2, 4, 7, "well_1_rate", "well_1"],
-        [2, 3, 2, "well_2_rate", "well_2"],
-    ]
-    wel_spd[2] = [
-        [2, 3, 2, "well_2_rate", "well_2"],
-        [2, 4, 7, "well_1_rate", "well_1"],
-    ]
-    wel_spd[3] = [
-        [2, 4, 7, "well_1_rate", "well_1"],
-        [2, 3, 2, "well_2_rate", "well_2"],
-        [0, 11, 2, -10, ""],
-        [0, 2, 4, -20, ""],
-        [0, 13, 5, -40, ""],
-    ]
-    fname = "wellrates.csv"
-    fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
-        fname=fname,
-        path=data_path,
-        known_hash="md5:6ca7366be279d679b14e8338a195422f",
-    )
-    tsdict = get_timeseries(
-        fpath, ["well_1_rate", "well_2_rate", "well_6_rate"], 3 * ["stepwise"]
-    )
-    flopy.mf6.ModflowGwfwel(
-        gwf,
-        stress_period_data=wel_spd,
-        boundnames=True,
-        timeseries=tsdict,
-        pname="WEL",
-    )
-
-    rivlay = 20 * [0]
-    rivrow = [2, 3, 4, 4, 5, 5, 5, 4, 4, 4, 9, 8, 7, 6, 6, 5, 5, 6, 6, 6]
-    rivcol = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-    rivstg = 10 * ["river_stage_1"] + 10 * ["river_stage_2"]
-    rivcnd = 2 * [1000 + f + 1 for f in range(10)]
-    rivrbt = list(np.linspace(35.9, 35.0, 10)) + list(np.linspace(36.9, 36.0, 10))
-    rivbnd = (
-        5 * [""]
-        + ["riv1_c6", "riv1_c7"]
-        + 3 * [""]
-        + 3 * ["riv2_upper"]
-        + 2 * [""]
-        + ["riv2_c6", "riv2_c7"]
-        + 3 * [""]
-    )
-    riv_spd = list(zip(rivlay, rivrow, rivcol, rivstg, rivcnd, rivrbt, rivbnd))
-    fname = "riverstage.csv"
-    fpath = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
-        fname=fname,
-        path=data_path,
-        known_hash="md5:83f8b526ec6e6978b1d9dbd6fde231ef",
-    )
-    tsdict = get_timeseries(
-        fpath,
-        ["river_stage_1", "river_stage_2"],
-        ["linear", "stepwise"],
-    )
-    flopy.mf6.ModflowGwfriv(
-        gwf,
-        stress_period_data=riv_spd,
-        boundnames=True,
-        timeseries=tsdict,
-        pname="RIV",
-    )
+    # wel_spd = {}
+    # wel_spd[1] = [
+    #     [0, 11, 2, -50, ""],
+    #     [2, 4, 7, "well_1_rate", "well_1"],
+    #     [2, 3, 2, "well_2_rate", "well_2"],
+    # ]
+    # wel_spd[2] = [
+    #     [2, 3, 2, "well_2_rate", "well_2"],
+    #     [2, 4, 7, "well_1_rate", "well_1"],
+    # ]
+    # wel_spd[3] = [
+    #     [2, 4, 7, "well_1_rate", "well_1"],
+    #     [2, 3, 2, "well_2_rate", "well_2"],
+    #     [0, 11, 2, -10, ""],
+    #     [0, 2, 4, -20, ""],
+    #     [0, 13, 5, -40, ""],
+    # ]
+    # fname = "wellrates.csv"
+    # fpath = pooch.retrieve(
+    #     url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    #     fname=fname,
+    #     path=data_path,
+    #     known_hash="md5:6ca7366be279d679b14e8338a195422f",
+    # )
+    # tsdict = get_timeseries(
+    #     fpath, ["well_1_rate", "well_2_rate", "well_6_rate"], 3 * ["stepwise"]
+    # )
+    # flopy.mf6.ModflowGwfwel(
+    #     gwf,
+    #     stress_period_data=wel_spd,
+    #     boundnames=True,
+    #     timeseries=tsdict,
+    #     pname="WEL",
+    # )
 
     hashes = [
         "f8b9b26a3403101f3568cd42f759554f",
         "c1ea7ded8edf33d6d70a1daf2524584a",
         "9ca294d3260c9d3c3487f8db498a0aa6",
     ]
-    for ipak, p in enumerate([recharge_zone_1, recharge_zone_2, recharge_zone_3]):
-        ix = GridIntersect(gwf.modelgrid)
-        result = ix.intersect(p, geo_dataframe=False)
-        rch_spd = []
-        for i in range(result.shape[0]):
-            rch_spd.append(
-                [
-                    0,
-                    *result["cellids"][i],
-                    f"rch_{ipak + 1}",
-                    result["areas"][i] / delr / delc,
-                ]
-            )
-        fname = f"recharge{ipak + 1}.csv"
-        fpath = pooch.retrieve(
-            url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
-            fname=fname,
-            path=data_path,
-            known_hash=f"md5:{hashes[ipak]}",
-        )
-        tsdict = get_timeseries(
-            fpath,
-            [f"rch_{ipak + 1}"],
-            ["stepwise"],
-            filename=f"{sim_name}.rch{ipak + 1}.ts",
-        )
-        flopy.mf6.ModflowGwfrch(
-            gwf,
-            stress_period_data=rch_spd,
-            boundnames=True,
-            timeseries=tsdict,
-            fixed_cell=True,
-            print_input=True,
-            print_flows=True,
-            save_flows=True,
-            auxiliary=["MULTIPLIER"],
-            auxmultname="MULTIPLIER",
-            pname=f"RCH-ZONE_{ipak + 1}",
-            filename=f"{sim_name}.rch{ipak + 1}",
-        )
+    # for ipak, p in enumerate([recharge_zone_1, recharge_zone_2, recharge_zone_3]):
+    #     ix = GridIntersect(gwf.modelgrid)
+    #     result = ix.intersect(p, geo_dataframe=False)
+    #     rch_spd = []
+    #     for i in range(result.shape[0]):
+    #         rch_spd.append(
+    #             [
+    #                 0,
+    #                 *result["cellids"][i],
+    #                 f"rch_{ipak + 1}",
+    #                 result["areas"][i] / delr / delc,
+    #             ]
+    #         )
+    #     fname = f"recharge{ipak + 1}.csv"
+    #     fpath = pooch.retrieve(
+    #         url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    #         fname=fname,
+    #         path=data_path,
+    #         known_hash=f"md5:{hashes[ipak]}",
+    #     )
+    #     tsdict = get_timeseries(
+    #         fpath,
+    #         [f"rch_{ipak + 1}"],
+    #         ["stepwise"],
+    #         filename=f"{sim_name}.rch{ipak + 1}.ts",
+    #     )
+    #     flopy.mf6.ModflowGwfrch(
+    #         gwf,
+    #         stress_period_data=rch_spd,
+    #         boundnames=True,
+    #         timeseries=tsdict,
+    #         fixed_cell=True,
+    #         print_input=True,
+    #         print_flows=True,
+    #         save_flows=True,
+    #         auxiliary=["MULTIPLIER"],
+    #         auxmultname="MULTIPLIER",
+    #         pname=f"RCH-ZONE_{ipak + 1}",
+    #         filename=f"{sim_name}.rch{ipak + 1}",
+    #     )
 
-    nseg = 3
-    etsurf = 50
-    etrate = 0.0004
-    depth = 10.0
-    pxdp = [0.2, 0.5]
-    petm = [0.3, 0.1]
-    row, col = np.where(np.zeros((nrow, ncol)) == 0)
-    cellids = list(zip(nrow * ncol * [0], row, col))
-    evt_spd = [[k, i, j, etsurf, etrate, depth, *pxdp, *petm] for k, i, j in cellids]
-    flopy.mf6.ModflowGwfevt(gwf, nseg=nseg, stress_period_data=evt_spd, pname="EVT")
+    # nseg = 3
+    # etsurf = 50
+    # etrate = 0.0004
+    # depth = 10.0
+    # pxdp = [0.2, 0.5]
+    # petm = [0.3, 0.1]
+    # row, col = np.where(np.zeros((nrow, ncol)) == 0)
+    # cellids = list(zip(nrow * ncol * [0], row, col))
+    # evt_spd = [[k, i, j, etsurf, etrate, depth, *pxdp, *petm] for k, i, j in cellids]
+    # flopy.mf6.ModflowGwfevt(gwf, nseg=nseg, stress_period_data=evt_spd, pname="EVT")
 
     head_filerecord = f"{sim_name}.hds"
     budget_filerecord = f"{sim_name}.cbc"
