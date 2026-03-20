@@ -18,11 +18,10 @@ import flopy
 import os
 import matplotlib.pyplot as plt
 import numpy as np
-import pooch
 from flopy.plot.styles import styles
 from flopy.utils.gridintersect import GridIntersect
 from modflow_devtools.misc import get_env, timed
-from shapely.geometry import Polygon
+# from shapely.geometry import Polygon
 
 # Example name and workspace paths. If this example is running
 # in the git repository, use the folder structure described in
@@ -58,22 +57,22 @@ ncol = 10  # Number of columns
 nrow = 15  # Number of rows
 delr = 500.0  # Column width ($m$)
 delc = 500.0  # Row width ($m$)
-top = 50.0  # Top of the model ($m$)
-botm_str = "5.0, -10.0, -100.0"  # Layer bottom elevations ($m$)
+top = 5.0  # Top of the model ($m$)
+botm_str = "-10.0"  # Layer bottom elevations ($m$)
 strt = 50.0  # Starting head ($m$)
-icelltype_str = "1, 0, 0"  # Cell conversion type
-k11_str = "5.0, 0.1, 4.0"  # Horizontal hydraulic conductivity ($m/d$)
-k33_str = "0.5, 5.0e-3, 0.1"  # Vertical hydraulic conductivity ($m/d$)
+icelltype_str = "0"  # Cell conversion type
+k11_str = "5.0"  # Horizontal hydraulic conductivity ($m/d$)
+k33_str = "0.5"  # Vertical hydraulic conductivity ($m/d$)
 ss = 1.0e-6  # Specific storage ($/m$)
-sy = 0.2  # Specific yield (unitless)
+# sy = 0.2  # Specific yield (unitless)
 
 # Static temporal data used by TDIS file
 # Simulation has 1 steady stress period (1 day)
 # and 3 transient stress periods (10 days each).
 # Each transient stress period has 120 2-hour time steps.
-perlen = [1.0, 10.0, 10.0, 10.0]
-nstp = [1, 120, 120, 120]
-tsmult = [1.0, 1.0, 1.0, 1.0]
+perlen = [1.0, 10.0]
+nstp = [1, 120]
+tsmult = [1.0, 1.0]
 tdis_ds = list(zip(perlen, nstp, tsmult))
 
 # Parse parameter strings into tuples
@@ -83,15 +82,15 @@ k33 = [float(value) for value in k33_str.split(",")]
 icelltype = [int(value) for value in icelltype_str.split(",")]
 
 # Recharge zones (constructed with shapely)
-recharge_zone_1 = Polygon(
-    shell=[(0, 0), (3000, 0), (3000, 5500), (1000, 7500), (0, 7500), (0, 0)]
-)
-recharge_zone_2 = Polygon(
-    shell=[(1000, 7500), (3000, 5500), (5000, 7500), (1000, 7500)]
-)
-recharge_zone_3 = Polygon(
-    shell=[(3000, 0), (5000, 0), (5000, 7500), (3000, 5500), (3000, 0)]
-)
+# recharge_zone_1 = Polygon(
+#     shell=[(0, 0), (3000, 0), (3000, 5500), (1000, 7500), (0, 7500), (0, 0)]
+# )
+# recharge_zone_2 = Polygon(
+#     shell=[(1000, 7500), (3000, 5500), (5000, 7500), (1000, 7500)]
+# )
+# recharge_zone_3 = Polygon(
+#     shell=[(3000, 0), (5000, 0), (5000, 7500), (3000, 5500), (3000, 0)]
+# )
 
 # Solver parameters
 nouter = 50
@@ -174,12 +173,12 @@ def build_models():
     ghb_spd += [[2, i, 9, "tides", 1500.0, "ESTUARY-L3"] for i in range(nrow)]
     ghb_spd = {0: ghb_spd}
     fname = "tides.csv"
-    fname = pooch.retrieve(
-        url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
-        fname=fname,
-        path=data_path,
-        known_hash="md5:425337a0bf24fa72c9e40f4e3d9f698a",
-    )
+    # fname = pooch.retrieve(
+    #     url=f"https://github.com/MODFLOW-ORG/modflow6-examples/raw/master/data/{sim_name}/{fname}",
+    #     fname=fname,
+    #     path=data_path,
+    #     known_hash="md5:425337a0bf24fa72c9e40f4e3d9f698a",
+    # )
     tsdict = get_timeseries(fname, "tides", "linear")
     ghbobs_dict = {}
     ghbobs_dict[f"{sim_name}.ghb.obs.csv"] = [
@@ -233,11 +232,11 @@ def build_models():
     #     pname="WEL",
     # )
 
-    hashes = [
-        "f8b9b26a3403101f3568cd42f759554f",
-        "c1ea7ded8edf33d6d70a1daf2524584a",
-        "9ca294d3260c9d3c3487f8db498a0aa6",
-    ]
+    # hashes = [
+    #     "f8b9b26a3403101f3568cd42f759554f",
+    #     "c1ea7ded8edf33d6d70a1daf2524584a",
+    #     "9ca294d3260c9d3c3487f8db498a0aa6",
+    # ]
     # for ipak, p in enumerate([recharge_zone_1, recharge_zone_2, recharge_zone_3]):
     #     ix = GridIntersect(gwf.modelgrid)
     #     result = ix.intersect(p, geo_dataframe=False)
